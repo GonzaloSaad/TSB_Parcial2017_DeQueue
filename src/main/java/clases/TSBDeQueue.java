@@ -744,7 +744,10 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
             expectedModCount++;
         }
     }
-
+    
+    /**
+     * Iterador que recorre de final (tail) al inicio (head).
+     */
     private class TSBDeQueueDescendingIterator implements Iterator<E> {
 
         private int current;
