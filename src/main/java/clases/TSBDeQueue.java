@@ -8,20 +8,47 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ *
+ * @author Gonzalo
+ * @param <E>
+ */
 public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Serializable, Cloneable {
 
     /**
      * Aclararaciones.
      *
+     * 1)Tal como se indico en el Preview del parcial, se consulto la
+     * documentacion de Java,
+     * mas precisamente
+     * https://docs.oracle.com/javase/7/docs/api/java/util/ArrayDeque.html
+     *
+     * 2)Los metodos se ordenaron alfabeticamente para hacer coincidir con la
+     * documentacion
+     * y que sean mas faciles de controlar mientras se programaban.
+     *
+     *
+     *
      *
      */
-    //********************* Atributos 
+    //**********************************************************
+    //********************* Atributos **************************
+    //**********************************************************
+    // Arreglo de soporte.    
     private Object items[];
+
+    // Contador de elementos. 
     private int count;
+
+    // Cantidad inicial del arreglo. 
     private int initialCapacity;
+
+    // Contador de las modificacion para hacer thread-safe al iterador. 
     private transient int modCount;
 
-    //********************* Constructores definidos en ArrayDeque.
+    //**********************************************************
+    //********* Constructores definidos en ArrayDeque **********
+    //**********************************************************
     /**
      * JavaDoc: Constructs an empty array deque with an initial capacity
      * sufficient to hold 16 elements.
@@ -67,7 +94,9 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
         modCount = 0;
     }
 
-    //********************* Metodos definidos en ArrayDeque (algunos).
+    //**********************************************************
+    //****** Metodos definidos en ArrayDeque (algunos) *********
+    //**********************************************************
     /**
      * JavaDoc: Inserts the specified element at the end of this deque.
      * This method is equivalent to addLast(E).
@@ -494,12 +523,31 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
         return false;
     }
 
+    /**
+     * JavaDoc: Returns the number of elements in this deque.
+     *
+     * @return - the number of elements in this deque.
+     */
     @Override
     public int size() {
         return count;
     }
 
-    //********************* Metodos heredados de java.util.Collection.
+    //**********************************************************
+    //******* Metodos heredados de java.util.Collection ********
+    //********************************************************** 
+    /**
+     * JavaDoc: Compares the specified object with this collection for equality.
+     *
+     * Aclaracion: Se escribio de nuevo el codigo de este metodo.
+     * a) Si apuntan al mismo objeto, retorna true.
+     * b) Si no son de la misma clase, retorna false.
+     * c) Si son de la misma clase y el contenido de sus arreglos es el mismo,
+     * retorna true.
+     *
+     * @param obj - object to be compared for equality with this collection.
+     * @return - true if the specified object is equal to this collection.
+     */
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
@@ -513,28 +561,71 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
 
     }
 
+    /**
+     * JavaDoc: Returns the hash code value for this collection.
+     *
+     * Aclaracion: dado que se escribio equals, se volvio a
+     * escribir hashCode, tal como lo indica la documentacion,
+     * haciendo que el hashCode depende de cada uno de los elementos
+     * del arreglo, de la misma forma que se calcula equals.
+     *
+     * @return - the hash code value for this collection.
+     */
     @Override
     public int hashCode() {
-        return super.hashCode(); //To change body of generated methods, choose Tools | Templates.
+        if (this.isEmpty()) {
+            return 0;
+        }
+
+        int hc = 0;
+        for (E elem : this) {
+            hc += elem.hashCode();
+        }
+
+        return hc;
     }
 
-    //********************* Metodos adicionales. 
+    //**********************************************************
+    //****************** Metodos adicionales *******************
+    //********************************************************** 
+    /**
+     *
+     * Se asegura que exita tamaño suficiente para una cantidad
+     * indicada. Si esa cantidad es igual al tamaño actual o
+     * dicha cantidad es menor al numero de objetos existentes,
+     * no realiza ningun cambio.
+     *
+     *
+     * @param minCapacity - cantidad minima que se solicita.
+     */
     private void ensureCapacity(int minCapacity) {
-        if (minCapacity <= items.length) {
+        if (minCapacity == items.length) {
             return;
         }
-        Object temp[] = new Object[minCapacity];
+        if (minCapacity < count) {
+            return;
+        }
+
+        Object[] temp = new Object[minCapacity];
         System.arraycopy(items, 0, temp, 0, count);
         items = temp;
 
     }
 
+    /**
+     * Es un metodo wrapper de ensureCapacity, que
+     * se utilizara cada vez que se agregue algo.
+     */
     private void checkCapacityToAdd() {
         if (count == items.length) {
             this.ensureCapacity(items.length * 2);
         }
     }
 
+    /**
+     * Es un metodo wrapper de ensureCapacity, que
+     * se utilizara cada vez que se elminie algo.
+     */
     private void checkCapacityWhenRemoved() {
         int t = items.length;
         if (count < t / 2) {
@@ -542,7 +633,15 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
         }
     }
 
-    private void remove(int index) {
+    /**
+     * Elimina un elemento, segun su parametro y luego
+     * acomoda el arreglo.
+     *
+     * @param index - indice del elemento a eliminar.
+     * @throws IndexOutOfBoundException - si el idice no pertenece a
+     * la lista de elementos.
+     */
+    private void remove(int index) throws IndexOutOfBoundsException {
         if (index >= count || index < 0) {
             throw new IndexOutOfBoundsException();
         }
@@ -556,23 +655,31 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
 
     }
 
-    //********************* Iteradores. 
+    //**********************************************************
+    //************************ Iteradores **********************
+    //********************************************************** 
+    /**
+     * Iterador que recorre de inicio (head) al final (tail).
+     */
     private class TSBDeQueueIterator implements Iterator<E> {
 
-        private int current;      // índice del elemento que hay que procesar.
-        private boolean next_ok; // true: next fue invocado (usado por remove()...)
+        private int current;
+        private boolean next_ok;
 
+        /**
+         * Constructor del iterador. Setea current en -1.
+         */
         public TSBDeQueueIterator() {
             current = -1;
             next_ok = false;
         }
 
         /**
-         * Indica si queda algun objeto en el recorrido del iterador.
+         * Indica si queda algun objeto en el recorrido del iterador,
+         * que se indica controlando que "current" sea menor que
+         * size()-1.
          *
-         *
-         * @return true si queda algun objeto en el recorrido - false si no
-         * quedan objetos.
+         * @return - true si queda algun objeto en el recorrido.
          */
         @Override
         public boolean hasNext() {
@@ -586,12 +693,12 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * Retorna el siguiente objeto en el recorrido del iterador.
          *
          *
-         * @return el siguiente objeto en el recorrido.
-         * @throws NoSuchElementException si la lista está vacia o en la lista
+         * @return - el siguiente objeto en el recorrido.
+         * @throws NoSuchElementException - si la lista está vacia o en la lista
          * no quedan elementos por recorrer.
          */
         @Override
-        public E next() {
+        public E next() throws NoSuchElementException {
             if (!hasNext()) {
                 throw new NoSuchElementException("No quedan elementos por recorrer.");
             }
@@ -606,12 +713,12 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * antes de invocar a next(). El iterador queda posicionado en el
          * elemento anterior al eliminado.
          *
-         * @throws IllegalStateException si se invoca a remove() sin haber
+         * @throws IllegalStateException - si se invoca a remove() sin haber
          * invocado a next(), o si remove() fue invocado mas de una vez
          * luego de una sola invocacion a next().
          */
         @Override
-        public void remove() {
+        public void remove() throws IllegalStateException {
             if (!next_ok) {
                 throw new IllegalStateException("Debe invocar a next() antes de remove().");
             }
@@ -624,19 +731,24 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
 
     private class TSBDeQueueDescendingIterator implements Iterator<E> {
 
-        private int current;      // índice del elemento que hay que procesar.
-        private boolean next_ok; // true: next fue invocado (usado por remove()...)
+        private int current;
+        private boolean next_ok;
 
+        /**
+         * Constructor, setea a current en size().
+         */
         public TSBDeQueueDescendingIterator() {
-            current = count;
+            current = size();
             next_ok = false;
         }
 
         /**
-         * Indica si queda algun objeto en el recorrido del iterador.
+         * Indica si queda algun objeto en el recorrido del iterador,
+         * que se indica controlando que "current" sea mayor a 0.
          *
          *
-         * @return true si queda algun objeto en el recorrido - false si no
+         *
+         * @return - true si queda algun objeto en el recorrido - false si no
          * quedan objetos.
          */
         @Override
@@ -651,12 +763,12 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * Retorna el siguiente objeto en el recorrido del iterador.
          *
          *
-         * @return el siguiente objeto en el recorrido.
-         * @throws NoSuchElementException si la lista está vacia o en la lista
+         * @return - el siguiente objeto en el recorrido.
+         * @throws NoSuchElementException - si la lista está vacia o en la lista
          * no quedan elementos por recorrer.
          */
         @Override
-        public E next() {
+        public E next() throws NoSuchElementException {
             if (!hasNext()) {
                 throw new NoSuchElementException("No quedan elementos por recorrer.");
             }
@@ -671,12 +783,12 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * antes de invocar a next(). El iterador queda posicionado en el
          * elemento anterior al eliminado.
          *
-         * @throws IllegalStateException si se invoca a remove() sin haber
+         * @throws IllegalStateException - si se invoca a remove() sin haber
          * invocado a next(), o si remove() fue invocado mas de una vez
          * luego de una sola invocacion a next().
          */
         @Override
-        public void remove() {
+        public void remove() throws IllegalStateException {
             if (!next_ok) {
                 throw new IllegalStateException("Debe invocar a next() antes de remove().");
             }

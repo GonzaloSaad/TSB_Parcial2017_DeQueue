@@ -86,7 +86,7 @@ public class TSBDeQueueTest
     public void testSize() 
     {
         System.out.println("size");
-        assertEquals(7, instance.size());
+        assertEquals(8, instance.size());
         assertEquals(0, empty.size());
     }
 
