@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.AbstractCollection;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.ConcurrentModificationException;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -672,6 +673,7 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
 
         private int current;
         private boolean next_ok;
+        private int expectedModCount;
 
         /**
          * Constructor del iterador. Setea current en -1.
@@ -679,6 +681,7 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
         public TSBDeQueueIterator() {
             current = -1;
             next_ok = false;
+            expectedModCount = modCount;
         }
 
         /**
@@ -703,9 +706,14 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * @return - el siguiente objeto en el recorrido.
          * @throws NoSuchElementException - si la lista está vacia o en la lista
          * no quedan elementos por recorrer.
+         * @throws ConcurrentModificationException - si la lista es modificada
+         * mientras es recorrida.
          */
         @Override
-        public E next() throws NoSuchElementException {
+        public E next() throws NoSuchElementException, ConcurrentModificationException {
+            if (TSBDeQueue.this.modCount != expectedModCount) {
+                throw new ConcurrentModificationException("Modificación inesperada en tabla.");
+            }
             if (!hasNext()) {
                 throw new NoSuchElementException("No quedan elementos por recorrer.");
             }
@@ -733,6 +741,7 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
             TSBDeQueue.this.remove(current);
             next_ok = false;
             current--;
+            expectedModCount++;
         }
     }
 
@@ -740,6 +749,7 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
 
         private int current;
         private boolean next_ok;
+        private int expectedModCount;
 
         /**
          * Constructor, setea a current en size().
@@ -747,13 +757,12 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
         public TSBDeQueueDescendingIterator() {
             current = size();
             next_ok = false;
+            expectedModCount = modCount;
         }
 
         /**
          * Indica si queda algun objeto en el recorrido del iterador,
          * que se indica controlando que "current" sea mayor a 0.
-         *
-         *
          *
          * @return - true si queda algun objeto en el recorrido - false si no
          * quedan objetos.
@@ -773,9 +782,14 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
          * @return - el siguiente objeto en el recorrido.
          * @throws NoSuchElementException - si la lista está vacia o en la lista
          * no quedan elementos por recorrer.
+         * @throws ConcurrentModificationException - si la lista es modificada
+         * mientras es recorrida.
          */
         @Override
-        public E next() throws NoSuchElementException {
+        public E next() throws NoSuchElementException, ConcurrentModificationException {
+            if (TSBDeQueue.this.modCount != expectedModCount) {
+                throw new ConcurrentModificationException("Modificación inesperada en tabla.");
+            }
             if (!hasNext()) {
                 throw new NoSuchElementException("No quedan elementos por recorrer.");
             }
@@ -803,6 +817,7 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
             TSBDeQueue.this.remove(current);
             next_ok = false;
             //current++;
+            expectedModCount++;
         }
     }
 }
