@@ -464,7 +464,9 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
     public boolean removeFirstOccurrence(Object o) {
         E objAux;
         for (Iterator it = this.iterator(); it.hasNext();) {
+
             objAux = (E) it.next();
+
             if (o.equals(objAux)) {
                 it.remove();
                 return true;
@@ -513,7 +515,9 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
     public boolean removeLastOccurrence(Object o) {
         E objAux;
         for (Iterator it = this.descendingIterator(); it.hasNext();) {
+
             objAux = (E) it.next();
+
             if (o.equals(objAux)) {
                 it.remove();
                 return true;
@@ -552,6 +556,9 @@ public class TSBDeQueue<E> extends AbstractCollection<E> implements Deque<E>, Se
     public boolean equals(Object obj) {
         if (this == obj) {
             return true;
+        }
+        if (obj == null) {
+            return false;
         }
         if (this.getClass() != obj.getClass()) {
             return false;
